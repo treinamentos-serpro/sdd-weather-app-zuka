@@ -248,7 +248,7 @@ test('renderiza o clima no viewport mobile', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Buscar cidade').fill('Rio de Janeiro');
   await page.getByRole('button', { name: 'Buscar' }).click();
-  await page.getByRole('button', { name: 'Rio de Janeiro, Brazil • Rio de Janeiro' }).click();
+  await page.getByRole('button', { name: 'Rio de Janeiro, Brazil' }).click();
 
   await expect(page.getByRole('heading', { name: 'Rio de Janeiro' })).toBeVisible();
   const currentWeather = page.getByRole('region', { name: 'Clima atual' });
