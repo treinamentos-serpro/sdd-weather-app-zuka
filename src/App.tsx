@@ -6,70 +6,45 @@ import ErrorState from './components/states/ErrorState';
 import LoadingState from './components/states/LoadingState';
 import UnitToggle from './components/UnitToggle';
 import WeatherSummary from './components/WeatherSummary';
-import { mockWeatherData } from './mocks/weather.mock';
+import { useWeather } from './hooks/useWeather';
 import type { Unit } from './types/weather';
-
-type ViewState = 'idle' | 'loading' | 'empty' | 'error' | 'success';
 
 export default function App() {
   const [unit, setUnit] = useState<Unit>('celsius');
-  const [viewState, setViewState] = useState<ViewState>('idle');
-  const [lastQuery, setLastQuery] = useState('');
-
-  const runSearch = (query: string) => {
-    setLastQuery(query);
-    setViewState('loading');
-
-    const normalized = query.trim().toLowerCase();
-    window.setTimeout(() => {
-      if (normalized === 'erro') {
-        setViewState('error');
-      } else if (normalized.includes(mockWeatherData.city.name.toLowerCase())) {
-        setViewState('success');
-      } else {
-        setViewState('empty');
-      }
-    }, 400);
-  };
-
-  const handleRetry = () => runSearch(lastQuery);
+  const { status, data, error, search, retry } = useWeather();
 
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
       <header className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
         <h1 className="text-2xl font-bold text-white">SDD Weather</h1>
         <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
-          <SearchBar onSearch={runSearch} disabled={viewState === 'loading'} />
+          <SearchBar onSearch={search} disabled={status === 'loading'} />
           <UnitToggle unit={unit} onChange={setUnit} />
         </div>
       </header>
 
       <main className="flex flex-col gap-6">
-        {viewState === 'idle' && (
+        {status === 'idle' && (
           <EmptyState
             title="Busque uma cidade"
             hint="Digite o nome de uma cidade para ver o clima atual e a previsão de 5 dias."
           />
         )}
-        {viewState === 'loading' && <LoadingState message="Buscando o clima..." />}
-        {viewState === 'empty' && (
+        {status === 'loading' && <LoadingState message="Buscando o clima..." />}
+        {status === 'empty' && (
           <EmptyState title="Nenhum resultado encontrado" hint="Tente buscar outra cidade." />
         )}
-        {viewState === 'error' && (
-          <ErrorState message="Não foi possível carregar o clima." onRetry={handleRetry} />
+        {status === 'error' && (
+          <ErrorState message={error ?? 'Não foi possível carregar o clima.'} onRetry={retry} />
         )}
-        {viewState === 'success' && (
+        {status === 'success' && data && (
           <>
-            <WeatherSummary
-              city={mockWeatherData.city}
-              current={mockWeatherData.current}
-              unit={unit}
-            />
+            <WeatherSummary city={data.city} current={data.current} unit={unit} />
             <ForecastList
-              forecast={mockWeatherData.forecast}
+              forecast={data.forecast}
               unit={unit}
-              isPartial={mockWeatherData.isPartial}
-              timezone={mockWeatherData.timezone}
+              isPartial={data.isPartial}
+              timezone={data.timezone}
             />
           </>
         )}
