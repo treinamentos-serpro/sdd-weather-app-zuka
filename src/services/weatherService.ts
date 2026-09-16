@@ -69,7 +69,7 @@ function mapResultToCity(result: GeocodingResult): City {
 
 /** Busca cidades pelo endpoint de geocoding da Open-Meteo. */
 export async function searchCities(name: string): Promise<City[]> {
-  if (!name) {
+  if (!name.trim()) {
     return [];
   }
 
@@ -82,7 +82,7 @@ export async function searchCities(name: string): Promise<City[]> {
 
   const data = await parseJson<GeocodingResponse>(response);
 
-  return (data.results ?? []).map(mapResultToCity);
+  return (data.results ?? []).slice(0, 10).map(mapResultToCity);
 }
 
 interface ForecastResponse {
@@ -97,6 +97,7 @@ interface ForecastResponse {
     temperature_2m_min?: number[];
     temperature_2m_max?: number[];
     weather_code?: number[];
+    precipitation_sum?: (number | null)[];
   };
 }
 
@@ -106,7 +107,7 @@ export async function getWeather(city: City): Promise<WeatherData> {
     latitude: String(city.latitude),
     longitude: String(city.longitude),
     current: 'temperature_2m,weather_code',
-    daily: 'weather_code,temperature_2m_max,temperature_2m_min',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum',
     temperature_unit: 'celsius',
     timezone: 'auto',
     forecast_days: '5',
@@ -136,6 +137,7 @@ export async function getWeather(city: City): Promise<WeatherData> {
     temperatureMinCelsius: data.daily?.temperature_2m_min?.[index],
     temperatureMaxCelsius: data.daily?.temperature_2m_max?.[index],
     weatherCode: data.daily?.weather_code?.[index],
+    precipitation: data.daily?.precipitation_sum?.[index] ?? 0,
   }));
 
   const isPartial =

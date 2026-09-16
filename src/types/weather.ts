@@ -24,6 +24,7 @@ export interface ForecastDay {
   temperatureMinCelsius?: number;
   temperatureMaxCelsius?: number;
   weatherCode?: number;
+  precipitation: number;
 }
 
 export interface WeatherData {

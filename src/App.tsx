@@ -32,7 +32,7 @@ export default function App() {
         )}
         {status === 'loading' && <LoadingState message="Buscando o clima..." />}
         {status === 'empty' && (
-          <EmptyState title="Nenhum resultado encontrado" hint="Tente buscar outra cidade." />
+          <EmptyState title="Nenhuma cidade encontrada" hint="Tente buscar outra cidade." />
         )}
         {status === 'error' && (
           <ErrorState message={error ?? 'Não foi possível carregar o clima.'} onRetry={retry} />

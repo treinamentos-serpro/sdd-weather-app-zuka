@@ -10,3 +10,15 @@ export function displayTemperature(celsius: number, unit: Unit): number {
   }
   return Math.round(celsius);
 }
+
+export function convertTemperature(celsius: number, unit: Unit): number {
+  return unit === 'fahrenheit' ? (celsius * 9) / 5 + 32 : celsius;
+}
+
+export function formatTemperature(celsius: number, unit: Unit): string {
+  return `${Math.round(convertTemperature(celsius, unit))}${unitLabel(unit)}`;
+}
+
+export function unitLabel(unit: Unit): string {
+  return unit === 'fahrenheit' ? '°F' : '°C';
+}

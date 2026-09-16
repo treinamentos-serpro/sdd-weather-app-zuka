@@ -18,7 +18,13 @@ const sampleWeather: WeatherData = {
   city: sampleCity,
   current: { temperatureCelsius: 24, weatherCode: 2, observedAt: '2026-09-16T10:00' },
   forecast: [
-    { date: '2026-09-16', temperatureMinCelsius: 19, temperatureMaxCelsius: 27, weatherCode: 2 },
+    {
+      date: '2026-09-16',
+      temperatureMinCelsius: 19,
+      temperatureMaxCelsius: 27,
+      weatherCode: 2,
+      precipitation: 0,
+    },
   ],
   timezone: 'America/Sao_Paulo',
   fetchedAt: '2026-09-16T10:05:00.000Z',

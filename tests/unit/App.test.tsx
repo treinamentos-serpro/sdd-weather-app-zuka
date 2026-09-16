@@ -19,11 +19,24 @@ const sampleWeather: WeatherData = {
   city: sampleCity,
   current: { temperatureCelsius: 24, weatherCode: 2, observedAt: '2026-09-16T10:00' },
   forecast: [
-    { date: '2026-09-16', temperatureMinCelsius: 19, temperatureMaxCelsius: 27, weatherCode: 2 },
+    {
+      date: '2026-09-16',
+      temperatureMinCelsius: 19,
+      temperatureMaxCelsius: 27,
+      weatherCode: 2,
+      precipitation: 0,
+    },
   ],
   timezone: 'America/Sao_Paulo',
   fetchedAt: '2026-09-16T10:05:00.000Z',
   isPartial: false,
+};
+
+const partialWeather: WeatherData = {
+  ...sampleWeather,
+  current: { observedAt: '2026-09-16T10:00' },
+  forecast: [{ date: '2026-09-16', precipitation: 0 }],
+  isPartial: true,
 };
 
 describe('App', () => {
@@ -45,7 +58,7 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Buscar cidade'), 'cidade inexistente');
     await user.click(screen.getByRole('button', { name: 'Buscar' }));
 
-    expect(await screen.findByText('Nenhum resultado encontrado')).toBeInTheDocument();
+    expect(await screen.findByText('Nenhuma cidade encontrada')).toBeInTheDocument();
   });
 
   it('mostra o clima e a previsão em caso de sucesso', async () => {
@@ -58,6 +71,19 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Buscar' }));
 
     expect(await screen.findByText('Rio de Janeiro')).toBeInTheDocument();
+  });
+
+  it('indica campos indisponíveis e previsão parcial', async () => {
+    vi.spyOn(weatherService, 'searchCities').mockResolvedValue([sampleCity]);
+    vi.spyOn(weatherService, 'getWeather').mockResolvedValue(partialWeather);
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText('Buscar cidade'), 'Rio de Janeiro');
+    await user.click(screen.getByRole('button', { name: 'Buscar' }));
+
+    expect(await screen.findAllByText('Indisponível')).not.toHaveLength(0);
+    expect(screen.getByRole('status')).toHaveTextContent('Previsão parcial');
   });
 
   it('mostra erro com retry que refaz a busca', async () => {

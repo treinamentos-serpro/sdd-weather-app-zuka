@@ -32,6 +32,16 @@ describe('searchCities', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('não chama a rede quando o input contém apenas espaços', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await searchCities('   ');
+
+    expect(result).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('mapeia results para City[] e usa encodeURIComponent no nome', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -82,6 +92,26 @@ describe('searchCities', () => {
     expect(result).toEqual([]);
   });
 
+  it('limita os resultados a dez cidades', async () => {
+    const results = Array.from({ length: 11 }, (_, index) => ({
+      id: index + 1,
+      name: `Cidade ${index + 1}`,
+      country: 'Brazil',
+      latitude: index,
+      longitude: index,
+    }));
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await searchCities('cidade');
+
+    expect(result).toHaveLength(10);
+    expect(result.at(-1)?.name).toBe('Cidade 10');
+  });
+
   it('lança WeatherServiceError em resposta não-ok', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -126,6 +156,7 @@ describe('getWeather', () => {
           temperature_2m_min: [19.1, 18.7, 20.0, 21.2, 20.4],
           temperature_2m_max: [27.5, 26.8, 28.1, 29.0, 27.9],
           weather_code: [2, 3, 1, 61, 80],
+          precipitation_sum: [0, 1.2, null, 4.5, 0.4],
         },
       }),
     });
@@ -145,7 +176,15 @@ describe('getWeather', () => {
       temperatureMinCelsius: 19.1,
       temperatureMaxCelsius: 27.5,
       weatherCode: 2,
+      precipitation: 0,
     });
+    expect(result.forecast).toEqual([
+      expect.objectContaining({ date: '2026-09-16', precipitation: 0 }),
+      expect.objectContaining({ date: '2026-09-17', precipitation: 1.2 }),
+      expect.objectContaining({ date: '2026-09-18', precipitation: 0 }),
+      expect.objectContaining({ date: '2026-09-19', precipitation: 4.5 }),
+      expect.objectContaining({ date: '2026-09-20', precipitation: 0.4 }),
+    ]);
     expect(result.isPartial).toBe(false);
     expect(result.timezone).toBe('America/Sao_Paulo');
   });
@@ -170,6 +209,38 @@ describe('getWeather', () => {
 
     expect(result.isPartial).toBe(true);
     expect(result.forecast).toHaveLength(2);
+  });
+
+  it('preserva campos ausentes e marca a resposta como parcial', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        timezone: 'America/Sao_Paulo',
+        current: { time: '2026-09-16T10:00', temperature_2m: 24.3 },
+        daily: {
+          time: ['2026-09-16'],
+          temperature_2m_min: [19.1],
+          temperature_2m_max: [27.5],
+        },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await getWeather(sampleCity);
+
+    expect(result.current).toEqual({
+      temperatureCelsius: 24.3,
+      weatherCode: undefined,
+      observedAt: '2026-09-16T10:00',
+    });
+    expect(result.forecast[0]).toEqual({
+      date: '2026-09-16',
+      temperatureMinCelsius: 19.1,
+      temperatureMaxCelsius: 27.5,
+      weatherCode: undefined,
+      precipitation: 0,
+    });
+    expect(result.isPartial).toBe(true);
   });
 
   it('lança WeatherServiceError quando current está ausente', async () => {
