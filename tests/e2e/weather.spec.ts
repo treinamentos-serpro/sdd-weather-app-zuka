@@ -47,6 +47,7 @@ test('busca cidade, exibe previsão e alterna para Fahrenheit', async ({ page })
   await page.goto('/');
   await page.getByLabel('Buscar cidade').fill('Rio de Janeiro');
   await page.getByRole('button', { name: 'Buscar' }).click();
+  await page.getByRole('button', { name: 'Rio de Janeiro, Brazil' }).click();
 
   await expect(page.getByRole('heading', { name: 'Rio de Janeiro' })).toBeVisible();
   const currentWeather = page.getByRole('region', { name: 'Clima atual' });
@@ -148,6 +149,7 @@ test('aceita caracteres especiais no nome da cidade', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Buscar cidade').fill('São Paulo & Centro');
   await page.getByRole('button', { name: 'Buscar' }).click();
+  await page.getByRole('button', { name: 'São Paulo, Brazil' }).click();
 
   await expect(page.getByRole('heading', { name: 'São Paulo' })).toBeVisible();
   expect(receivedName).toBe('São Paulo & Centro');
@@ -193,6 +195,7 @@ test('exibe forecast incompleto como previsão parcial', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Buscar cidade').fill('Rio de Janeiro');
   await page.getByRole('button', { name: 'Buscar' }).click();
+  await page.getByRole('button', { name: 'Rio de Janeiro, Brazil' }).click();
 
   const forecast = page.getByRole('region', { name: 'Previsão de 5 dias' });
   await expect(forecast.getByRole('status')).toHaveText('Previsão parcial');
@@ -245,6 +248,7 @@ test('renderiza o clima no viewport mobile', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Buscar cidade').fill('Rio de Janeiro');
   await page.getByRole('button', { name: 'Buscar' }).click();
+  await page.getByRole('button', { name: 'Rio de Janeiro, Brazil • Rio de Janeiro' }).click();
 
   await expect(page.getByRole('heading', { name: 'Rio de Janeiro' })).toBeVisible();
   const currentWeather = page.getByRole('region', { name: 'Clima atual' });
