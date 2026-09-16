@@ -44,5 +44,14 @@
       "semicolons": "always",
       "trailingCommas": "all"
     }
+  },
+  "css": {
+    "parser": {
+      "cssModules": true,
+      "tailwindDirectives": true
+    },
+    "linter": {
+      "enabled": true
+    }
   }
 }
