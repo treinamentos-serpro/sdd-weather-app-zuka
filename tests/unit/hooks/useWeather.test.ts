@@ -36,9 +36,9 @@ describe('useWeather', () => {
     vi.restoreAllMocks();
   });
 
-  it('busca cidades e carrega o clima da primeira em caso de sucesso', async () => {
+  it('busca cidades sem carregar clima automaticamente e mantém a lista disponível para seleção', async () => {
     vi.spyOn(weatherService, 'searchCities').mockResolvedValue([sampleCity]);
-    vi.spyOn(weatherService, 'getWeather').mockResolvedValue(sampleWeather);
+    const getWeatherSpy = vi.spyOn(weatherService, 'getWeather').mockResolvedValue(sampleWeather);
 
     const { result } = renderHook(() => useWeather());
 
@@ -46,9 +46,10 @@ describe('useWeather', () => {
       await result.current.search('Rio');
     });
 
-    expect(result.current.status).toBe('success');
+    expect(result.current.status).toBe('idle');
     expect(result.current.cities).toEqual([sampleCity]);
-    expect(result.current.data).toEqual(sampleWeather);
+    expect(result.current.data).toBeUndefined();
+    expect(getWeatherSpy).not.toHaveBeenCalled();
     expect(result.current.query).toBe('Rio');
   });
 
@@ -146,9 +147,11 @@ describe('useWeather', () => {
       await result.current.retry();
     });
 
-    await waitFor(() => expect(result.current.status).toBe('success'));
+    await waitFor(() => expect(result.current.status).toBe('idle'));
     expect(searchSpy).toHaveBeenCalledTimes(2);
-    expect(result.current.data).toEqual(sampleWeather);
+    expect(result.current.cities).toEqual([sampleCity]);
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.query).toBe('Rio');
   });
 
   it('retry refaz o carregamento do clima após erro em selectCity', async () => {

@@ -61,7 +61,7 @@ describe('App', () => {
     expect(await screen.findByText('Nenhuma cidade encontrada')).toBeInTheDocument();
   });
 
-  it('mostra o clima e a previsão em caso de sucesso', async () => {
+  it('mostra resultados de cidade e seleciona explicitamente antes de carregar o clima', async () => {
     vi.spyOn(weatherService, 'searchCities').mockResolvedValue([sampleCity]);
     vi.spyOn(weatherService, 'getWeather').mockResolvedValue(sampleWeather);
     const user = userEvent.setup();
@@ -70,7 +70,11 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Buscar cidade'), 'Rio de Janeiro');
     await user.click(screen.getByRole('button', { name: 'Buscar' }));
 
+    const resultItem = await screen.findByRole('button', { name: /rio de janeiro/i });
+    await user.click(resultItem);
+
     expect(await screen.findByText('Rio de Janeiro')).toBeInTheDocument();
+    expect(weatherService.getWeather).toHaveBeenCalledWith(sampleCity);
   });
 
   it('move o foco para o conteúdo após concluir a busca', async () => {
@@ -96,6 +100,7 @@ describe('App', () => {
 
     await user.type(screen.getByLabelText('Buscar cidade'), 'Rio de Janeiro');
     await user.click(screen.getByRole('button', { name: 'Buscar' }));
+    await user.click(await screen.findByRole('button', { name: /rio de janeiro/i }));
 
     expect(await screen.findAllByText('Indisponível')).not.toHaveLength(0);
     expect(screen.getByRole('status')).toHaveTextContent('Previsão parcial');

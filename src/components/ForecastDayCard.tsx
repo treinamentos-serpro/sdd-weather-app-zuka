@@ -1,6 +1,6 @@
 import { formatDayLabel } from '../lib/dateTime';
 import { displayTemperature } from '../lib/temperature';
-import { getWeatherLabel } from '../lib/weatherCodes';
+import { getWeatherIcon, getWeatherLabel } from '../lib/weatherCodes';
 import type { ForecastDay, Unit } from '../types/weather';
 
 export interface ForecastDayCardProps {
@@ -27,7 +27,12 @@ export default function ForecastDayCard({ day, unit, timezone }: ForecastDayCard
       <p className="text-sm font-medium capitalize text-white/70">
         {formatDayLabel(day.date, timezone)}
       </p>
-      <p className="text-sm text-white/80">{getWeatherLabel(day.weatherCode)}</p>
+      <p className="flex items-center justify-center gap-2 text-sm text-white/80">
+        <span aria-hidden="true" className="text-lg leading-none">
+          {getWeatherIcon(day.weatherCode)}
+        </span>
+        <span>{getWeatherLabel(day.weatherCode)}</span>
+      </p>
       <p className="text-base font-semibold text-white">
         <span className="sr-only">Máxima </span>
         {formatTemperature(day.temperatureMaxCelsius, unit)}

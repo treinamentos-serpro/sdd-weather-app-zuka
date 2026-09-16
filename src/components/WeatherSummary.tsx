@@ -1,6 +1,6 @@
 import { formatObservedAt } from '../lib/dateTime';
 import { displayTemperature } from '../lib/temperature';
-import { getWeatherLabel } from '../lib/weatherCodes';
+import { getWeatherIcon, getWeatherLabel } from '../lib/weatherCodes';
 import type { City, CurrentWeather, Unit } from '../types/weather';
 
 export interface WeatherSummaryProps {
@@ -30,6 +30,7 @@ export default function WeatherSummary({
     ? `${displayTemperature(temperature, unit)}${UNIT_SYMBOL[unit]}`
     : UNAVAILABLE_LABEL;
   const conditionLabel = getWeatherLabel(current.weatherCode);
+  const conditionIcon = getWeatherIcon(current.weatherCode);
   const updatedLabel = formatObservedAt(current.observedAt, city.timezone);
 
   return (
@@ -43,7 +44,12 @@ export default function WeatherSummary({
       </header>
 
       <p className="text-5xl font-bold text-white sm:text-6xl">{temperatureLabel}</p>
-      <p className="text-lg text-white/80">{conditionLabel}</p>
+      <p className="flex items-center justify-center gap-2 text-lg text-white/80 sm:justify-start">
+        <span aria-hidden="true" className="text-2xl leading-none">
+          {conditionIcon}
+        </span>
+        <span>{conditionLabel}</span>
+      </p>
 
       <p className="text-sm text-white/50">
         Atualizado às {updatedLabel}
