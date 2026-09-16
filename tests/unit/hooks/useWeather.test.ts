@@ -147,9 +147,11 @@ describe('useWeather', () => {
       await result.current.retry();
     });
 
-    await waitFor(() => expect(result.current.status).toBe('success'));
+    await waitFor(() => expect(result.current.status).toBe('idle'));
     expect(searchSpy).toHaveBeenCalledTimes(2);
-    expect(result.current.data).toEqual(sampleWeather);
+    expect(result.current.cities).toEqual([sampleCity]);
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.query).toBe('Rio');
   });
 
   it('retry refaz o carregamento do clima após erro em selectCity', async () => {

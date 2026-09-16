@@ -100,6 +100,7 @@ describe('App', () => {
 
     await user.type(screen.getByLabelText('Buscar cidade'), 'Rio de Janeiro');
     await user.click(screen.getByRole('button', { name: 'Buscar' }));
+    await user.click(await screen.findByRole('button', { name: /rio de janeiro/i }));
 
     expect(await screen.findAllByText('Indisponível')).not.toHaveLength(0);
     expect(screen.getByRole('status')).toHaveTextContent('Previsão parcial');
