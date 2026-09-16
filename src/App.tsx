@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ForecastList from './components/ForecastList';
 import SearchBar from './components/SearchBar';
+import SearchResults from './components/SearchResults';
 import EmptyState from './components/states/EmptyState';
 import ErrorState from './components/states/ErrorState';
 import LoadingState from './components/states/LoadingState';
@@ -11,7 +12,7 @@ import type { Unit } from './types/weather';
 
 export default function App() {
   const [unit, setUnit] = useState<Unit>('celsius');
-  const { status, data, error, query, search, retry } = useWeather();
+  const { status, data, error, cities, query, search, selectCity, retry } = useWeather();
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -36,13 +37,16 @@ export default function App() {
         aria-busy={status === 'loading'}
         className="flex flex-col gap-6 outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
       >
-        {status === 'idle' && (
+        {status === 'idle' && cities.length === 0 && (
           <EmptyState
             title="Busque uma cidade"
             hint="Digite o nome de uma cidade para ver o clima atual e a previsão de 5 dias."
           />
         )}
         {status === 'loading' && <LoadingState message="Buscando o clima..." />}
+        {status === 'idle' && cities.length > 0 && (
+          <SearchResults cities={cities} onSelect={selectCity} />
+        )}
         {status === 'empty' && (
           <EmptyState title="Nenhuma cidade encontrada" hint="Tente buscar outra cidade." />
         )}

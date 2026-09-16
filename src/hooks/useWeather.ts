@@ -45,31 +45,37 @@ export function useWeather(): UseWeatherResult {
     }
   }, []);
 
-  const search = useCallback(
-    async (name: string) => {
-      lastActionRef.current = () => search(name);
-      setQuery(name);
-      setStatus('loading');
-      setError(undefined);
+  const search = useCallback(async (name: string) => {
+    lastActionRef.current = () => search(name);
+    setQuery(name);
+    setError(undefined);
 
-      try {
-        const results = await searchCities(name);
-        setCities(results);
+    if (!name.trim()) {
+      setStatus('idle');
+      setCities([]);
+      setData(undefined);
+      return;
+    }
 
-        if (results.length === 0) {
-          setData(undefined);
-          setStatus('empty');
-          return;
-        }
+    setStatus('loading');
 
-        await selectCity(results[0]);
-      } catch (err) {
-        setStatus('error');
-        setError(toErrorMessage(err));
+    try {
+      const results = await searchCities(name);
+      setCities(results);
+
+      if (results.length === 0) {
+        setData(undefined);
+        setStatus('empty');
+        return;
       }
-    },
-    [selectCity],
-  );
+
+      setData(undefined);
+      setStatus('idle');
+    } catch (err) {
+      setStatus('error');
+      setError(toErrorMessage(err));
+    }
+  }, []);
 
   const retry = useCallback(async () => {
     await lastActionRef.current();
