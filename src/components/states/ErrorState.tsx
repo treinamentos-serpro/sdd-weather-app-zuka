@@ -8,7 +8,7 @@ export default function ErrorState({ message, onRetry }: ErrorStateProps) {
     <div
       role="alert"
       aria-live="assertive"
-      className="flex min-h-[9rem] flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-6 text-center shadow-glass backdrop-blur-md"
+      className="flex min-h-[9rem] flex-col items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/5 p-6 text-center shadow-glass backdrop-blur-md"
     >
       <p className="text-sm text-white/80">{message}</p>
       <button

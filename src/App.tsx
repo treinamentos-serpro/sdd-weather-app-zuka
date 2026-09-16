@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ForecastList from './components/ForecastList';
 import SearchBar from './components/SearchBar';
 import EmptyState from './components/states/EmptyState';
@@ -11,7 +11,14 @@ import type { Unit } from './types/weather';
 
 export default function App() {
   const [unit, setUnit] = useState<Unit>('celsius');
-  const { status, data, error, search, retry } = useWeather();
+  const { status, data, error, query, search, retry } = useWeather();
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (query && status !== 'idle' && status !== 'loading') {
+      mainRef.current?.focus();
+    }
+  }, [query, status]);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -23,7 +30,12 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex flex-col gap-6">
+      <main
+        ref={mainRef}
+        tabIndex={-1}
+        aria-busy={status === 'loading'}
+        className="flex flex-col gap-6 outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+      >
         {status === 'idle' && (
           <EmptyState
             title="Busque uma cidade"

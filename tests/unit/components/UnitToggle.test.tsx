@@ -37,9 +37,12 @@ describe('UnitToggle e WeatherSummary', () => {
 
     expect(screen.getByText('0°C')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '°F' }));
+    await user.click(screen.getByRole('button', { name: 'Fahrenheit' }));
 
     expect(screen.getByText('32°F')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '°F' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Fahrenheit' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 });

@@ -24,9 +24,10 @@ export default function WeatherSummary({
   unit,
   isStale = false,
 }: WeatherSummaryProps) {
-  const hasTemperature = current.temperatureCelsius !== undefined;
+  const temperature = current.temperatureCelsius;
+  const hasTemperature = typeof temperature === 'number' && Number.isFinite(temperature);
   const temperatureLabel = hasTemperature
-    ? `${displayTemperature(current.temperatureCelsius as number, unit)}${UNIT_SYMBOL[unit]}`
+    ? `${displayTemperature(temperature, unit)}${UNIT_SYMBOL[unit]}`
     : UNAVAILABLE_LABEL;
   const conditionLabel = getWeatherLabel(current.weatherCode);
   const updatedLabel = formatObservedAt(current.observedAt, city.timezone);
@@ -34,7 +35,7 @@ export default function WeatherSummary({
   return (
     <section
       aria-label="Clima atual"
-      className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center shadow-glass backdrop-blur-md sm:text-left"
+      className="flex flex-col gap-2 rounded-2xl border border-white/20 bg-white/5 p-6 text-center shadow-glass backdrop-blur-md sm:text-left"
     >
       <header>
         <h2 className="text-xl font-semibold text-white">{city.name}</h2>

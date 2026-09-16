@@ -4,7 +4,7 @@ import type { City, WeatherData } from '../types/weather';
 
 export type WeatherStatus = 'idle' | 'loading' | 'success' | 'error' | 'empty';
 
-const UNKNOWN_ERROR_MESSAGE = 'Erro desconhecido.';
+const UNKNOWN_ERROR_MESSAGE = 'Não foi possível carregar o clima. Tente novamente.';
 
 function toErrorMessage(error: unknown): string {
   return error instanceof WeatherServiceError ? error.message : UNKNOWN_ERROR_MESSAGE;

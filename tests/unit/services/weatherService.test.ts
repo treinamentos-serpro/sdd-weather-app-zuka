@@ -243,7 +243,7 @@ describe('getWeather', () => {
     expect(result.isPartial).toBe(true);
   });
 
-  it('lança WeatherServiceError quando current está ausente', async () => {
+  it('marca como parcial quando current está ausente', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -258,10 +258,17 @@ describe('getWeather', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(getWeather(sampleCity)).rejects.toBeInstanceOf(WeatherServiceError);
+    const result = await getWeather(sampleCity);
+
+    expect(result.current).toEqual({
+      temperatureCelsius: undefined,
+      weatherCode: undefined,
+      observedAt: undefined,
+    });
+    expect(result.isPartial).toBe(true);
   });
 
-  it('lança WeatherServiceError quando daily está ausente', async () => {
+  it('marca como parcial quando daily está ausente', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -271,7 +278,51 @@ describe('getWeather', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(getWeather(sampleCity)).rejects.toBeInstanceOf(WeatherServiceError);
+    const result = await getWeather(sampleCity);
+
+    expect(result.forecast).toEqual([]);
+    expect(result.isPartial).toBe(true);
+  });
+
+  it('normaliza campos nulos sem produzir NaN ou valores nulos', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        timezone: null,
+        current: {
+          time: null,
+          temperature_2m: null,
+          weather_code: null,
+        },
+        daily: {
+          time: [null],
+          temperature_2m_min: [null],
+          temperature_2m_max: [null],
+          weather_code: [null],
+          precipitation_sum: [null],
+        },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await getWeather(sampleCity);
+
+    expect(result.current).toEqual({
+      temperatureCelsius: undefined,
+      weatherCode: undefined,
+      observedAt: undefined,
+    });
+    expect(result.forecast).toEqual([
+      {
+        date: 'day-0',
+        temperatureMinCelsius: undefined,
+        temperatureMaxCelsius: undefined,
+        weatherCode: undefined,
+        precipitation: 0,
+      },
+    ]);
+    expect(result.timezone).toBe('America/Sao_Paulo');
+    expect(JSON.stringify(result)).not.toContain('NaN');
   });
 
   it('lança WeatherServiceError em resposta não-ok', async () => {
@@ -304,7 +355,7 @@ describe('fetchWithTimeout', () => {
     vi.useRealTimers();
   });
 
-  it('converte AbortError em "A requisição demorou demais."', async () => {
+  it('converte AbortError em uma mensagem clara de timeout', async () => {
     vi.useFakeTimers();
     const fetchMock = vi.fn().mockImplementation((_url, init?: RequestInit) => {
       return new Promise((_resolve, reject) => {
@@ -318,16 +369,32 @@ describe('fetchWithTimeout', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const promise = searchCities('Rio');
-    const assertion = expect(promise).rejects.toThrow('A requisição demorou demais.');
+    const assertion = expect(promise).rejects.toThrow(
+      'A conexão demorou mais que o esperado. Tente novamente.',
+    );
     await vi.advanceTimersByTimeAsync(10_000);
     await assertion;
   });
 
-  it('converte falha de rede em "Falha de rede."', async () => {
+  it('converte falha offline em uma mensagem orientada à ação', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(searchCities('Rio')).rejects.toThrow('Falha de rede.');
-    await expect(searchCities('Rio')).rejects.toBeInstanceOf(WeatherServiceError);
+    await expect(searchCities('Rio')).rejects.toMatchObject({
+      name: 'WeatherServiceError',
+      kind: 'network',
+      message: 'Sem conexão com a internet. Verifique sua rede e tente novamente.',
+    });
+  });
+
+  it('converte falha offline do forecast em WeatherServiceError', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getWeather(sampleCity)).rejects.toMatchObject({
+      name: 'WeatherServiceError',
+      kind: 'network',
+      message: 'Sem conexão com a internet. Verifique sua rede e tente novamente.',
+    });
   });
 });

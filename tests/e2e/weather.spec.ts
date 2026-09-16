@@ -55,7 +55,7 @@ test('busca cidade, exibe previsão e alterna para Fahrenheit', async ({ page })
   await expect(forecast).toBeVisible();
   await expect(forecast.getByRole('article')).toHaveCount(5);
 
-  await page.getByRole('button', { name: '°F' }).click();
+  await page.getByRole('button', { name: 'Fahrenheit' }).click();
 
   await expect(currentWeather).toContainText('32°F');
 });
@@ -74,6 +74,131 @@ test('exibe mensagem quando o geocoding não retorna cidades', async ({ page }) 
   await page.getByRole('button', { name: 'Buscar' }).click();
 
   await expect(page.getByText('Nenhuma cidade encontrada', { exact: true })).toBeVisible();
+});
+
+test('orienta o preenchimento sem enviar busca vazia', async ({ page }) => {
+  let geocodingRequests = 0;
+  await page.route('**/geocoding-api.open-meteo.com/**', async (route) => {
+    geocodingRequests += 1;
+    await route.continue();
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Buscar' }).click();
+
+  await expect(page.getByRole('alert')).toHaveText('Digite o nome de uma cidade para buscar.');
+  expect(geocodingRequests).toBe(0);
+});
+
+test('orienta o preenchimento quando a busca contém só espaços', async ({ page }) => {
+  let geocodingRequests = 0;
+  await page.route('**/geocoding-api.open-meteo.com/**', async (route) => {
+    geocodingRequests += 1;
+    await route.continue();
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Buscar cidade').fill('   ');
+  await page.getByRole('button', { name: 'Buscar' }).click();
+
+  await expect(page.getByRole('alert')).toHaveText('Digite o nome de uma cidade para buscar.');
+  expect(geocodingRequests).toBe(0);
+});
+
+test('aceita caracteres especiais no nome da cidade', async ({ page }) => {
+  let receivedName: string | null = null;
+  await page.route('**/geocoding-api.open-meteo.com/**', async (route) => {
+    receivedName = new URL(route.request().url()).searchParams.get('name');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        results: [
+          {
+            id: 1,
+            name: 'São Paulo',
+            country: 'Brazil',
+            country_code: 'BR',
+            latitude: -23.55,
+            longitude: -46.63,
+            timezone: 'America/Sao_Paulo',
+          },
+        ],
+      }),
+    });
+  });
+  await page.route('**/api.open-meteo.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        timezone: 'America/Sao_Paulo',
+        current: { time: '2026-09-16T10:00', temperature_2m: 20, weather_code: 1 },
+        daily: {
+          time: ['2026-09-16'],
+          temperature_2m_min: [15],
+          temperature_2m_max: [25],
+          weather_code: [1],
+          precipitation_sum: [0],
+        },
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Buscar cidade').fill('São Paulo & Centro');
+  await page.getByRole('button', { name: 'Buscar' }).click();
+
+  await expect(page.getByRole('heading', { name: 'São Paulo' })).toBeVisible();
+  expect(receivedName).toBe('São Paulo & Centro');
+});
+
+test('exibe forecast incompleto como previsão parcial', async ({ page }) => {
+  await page.route('**/geocoding-api.open-meteo.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        results: [
+          {
+            id: 1,
+            name: 'Rio de Janeiro',
+            country: 'Brazil',
+            latitude: -22.9,
+            longitude: -43.2,
+            timezone: 'America/Sao_Paulo',
+          },
+        ],
+      }),
+    });
+  });
+  await page.route('**/api.open-meteo.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        timezone: 'America/Sao_Paulo',
+        current: { time: '2026-09-16T10:00', temperature_2m: null, weather_code: null },
+        daily: {
+          time: ['2026-09-16'],
+          temperature_2m_min: [null],
+          temperature_2m_max: [27],
+          weather_code: [null],
+          precipitation_sum: [null],
+        },
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Buscar cidade').fill('Rio de Janeiro');
+  await page.getByRole('button', { name: 'Buscar' }).click();
+
+  const forecast = page.getByRole('region', { name: 'Previsão de 5 dias' });
+  await expect(forecast.getByRole('status')).toHaveText('Previsão parcial');
+  await expect(page.getByText('Indisponível').first()).toBeVisible();
+  await expect(forecast).not.toContainText('NaN');
+  await expect(forecast).not.toContainText('undefined');
 });
 
 test('renderiza o clima no viewport mobile', async ({ page }) => {

@@ -82,6 +82,26 @@ describe('useWeather', () => {
     expect(result.current.error).toBe('Falha de rede.');
   });
 
+  it('exibe mensagem amigável quando a rede fica offline durante a busca', async () => {
+    vi.spyOn(weatherService, 'searchCities').mockRejectedValue(
+      new weatherService.WeatherServiceError(
+        'Sem conexão com a internet. Verifique sua rede e tente novamente.',
+        'network',
+      ),
+    );
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.search('Rio');
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe(
+      'Sem conexão com a internet. Verifique sua rede e tente novamente.',
+    );
+  });
+
   it('usa mensagem genérica para erros inesperados, sem vazar detalhes internos', async () => {
     vi.spyOn(weatherService, 'searchCities').mockRejectedValue(new TypeError('boom'));
 
@@ -92,7 +112,7 @@ describe('useWeather', () => {
     });
 
     expect(result.current.status).toBe('error');
-    expect(result.current.error).toBe('Erro desconhecido.');
+    expect(result.current.error).toBe('Não foi possível carregar o clima. Tente novamente.');
   });
 
   it('selectCity carrega o clima da cidade escolhida', async () => {
@@ -149,5 +169,32 @@ describe('useWeather', () => {
 
     expect(result.current.status).toBe('success');
     expect(result.current.data).toEqual(sampleWeather);
+  });
+
+  it('retry refaz a última busca após uma falha offline', async () => {
+    const searchSpy = vi
+      .spyOn(weatherService, 'searchCities')
+      .mockRejectedValueOnce(
+        new weatherService.WeatherServiceError(
+          'Sem conexão com a internet. Verifique sua rede e tente novamente.',
+          'network',
+        ),
+      )
+      .mockResolvedValueOnce([]);
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.search('Rio');
+    });
+    expect(result.current.status).toBe('error');
+
+    await act(async () => {
+      await result.current.retry();
+    });
+
+    expect(result.current.status).toBe('empty');
+    expect(searchSpy).toHaveBeenCalledTimes(2);
+    expect(searchSpy).toHaveBeenLastCalledWith('Rio');
   });
 });

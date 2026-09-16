@@ -17,13 +17,13 @@ const UNIT_SYMBOL: Record<Unit, string> = {
 const UNAVAILABLE_LABEL = 'Indisponível';
 
 function formatTemperature(celsius: number | undefined, unit: Unit): string {
-  if (celsius === undefined) return UNAVAILABLE_LABEL;
+  if (typeof celsius !== 'number' || !Number.isFinite(celsius)) return UNAVAILABLE_LABEL;
   return `${displayTemperature(celsius, unit)}${UNIT_SYMBOL[unit]}`;
 }
 
 export default function ForecastDayCard({ day, unit, timezone }: ForecastDayCardProps) {
   return (
-    <article className="flex min-h-[9rem] flex-col items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-center shadow-glass backdrop-blur-md">
+    <article className="flex min-h-[9rem] flex-col items-center justify-between gap-2 rounded-2xl border border-white/20 bg-white/5 p-4 text-center shadow-glass backdrop-blur-md">
       <p className="text-sm font-medium capitalize text-white/70">
         {formatDayLabel(day.date, timezone)}
       </p>

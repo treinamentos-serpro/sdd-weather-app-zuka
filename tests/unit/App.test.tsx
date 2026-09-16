@@ -73,6 +73,21 @@ describe('App', () => {
     expect(await screen.findByText('Rio de Janeiro')).toBeInTheDocument();
   });
 
+  it('move o foco para o conteúdo após concluir a busca', async () => {
+    vi.spyOn(weatherService, 'searchCities').mockResolvedValue([sampleCity]);
+    vi.spyOn(weatherService, 'getWeather').mockResolvedValue(sampleWeather);
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText('Buscar cidade'), 'Rio de Janeiro');
+    await user.click(screen.getByRole('button', { name: 'Buscar' }));
+
+    await screen.findByText('Rio de Janeiro');
+
+    expect(screen.getByRole('main')).toHaveFocus();
+    expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'false');
+  });
+
   it('indica campos indisponíveis e previsão parcial', async () => {
     vi.spyOn(weatherService, 'searchCities').mockResolvedValue([sampleCity]);
     vi.spyOn(weatherService, 'getWeather').mockResolvedValue(partialWeather);

@@ -10,10 +10,11 @@ export default function UnitToggle({ unit, onChange }: UnitToggleProps) {
     <div
       role="group"
       aria-label="Unidade de temperatura"
-      className="inline-flex rounded-2xl border border-white/10 bg-white/5 p-1 shadow-glass backdrop-blur-md"
+      className="inline-flex rounded-2xl border border-white/20 bg-white/5 p-1 shadow-glass backdrop-blur-md"
     >
       <button
         type="button"
+        aria-label="Celsius"
         aria-pressed={unit === 'celsius'}
         onClick={() => onChange('celsius')}
         className={`rounded-xl px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ${
@@ -24,6 +25,7 @@ export default function UnitToggle({ unit, onChange }: UnitToggleProps) {
       </button>
       <button
         type="button"
+        aria-label="Fahrenheit"
         aria-pressed={unit === 'fahrenheit'}
         onClick={() => onChange('fahrenheit')}
         className={`rounded-xl px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ${
